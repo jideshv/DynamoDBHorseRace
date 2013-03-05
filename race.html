@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <meta name="viewport" content="width=device-width, user-scalable=no" />
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="scripts/google.fastbutton.js"></script>
+    <script src="scripts/jquery.google.fastbutton.js"></script>
+    <script>
+      var connected = false;
+      var ws;
+
+      function UpdateHorseLocations(evt)
+      {
+          if (evt.data == "RESET")
+          {
+              //reset
+          }
+
+          if (evt.data == "READY")
+          {
+              $("#racestatus").html("Get Ready!!");
+              $("#racestatus").css("border", "1px solid #FF0000");
+              return;
+          }
+
+          if (evt.data == "SET")
+          {
+              $("#racestatus").html("Get Set!!");
+              $("#racestatus").css("border", "1px solid #FFA500");
+              return;
+          }
+
+          if (evt.data == "GO")
+          {
+              $("#racestatus").html("Go!!");
+              $("#racestatus").css("border", "1px solid #00FF00");
+              return;
+          }
+
+          var horses = evt.data.split(";");
+          var count = horses.length;
+
+          var players = horses[0].split(":");
+          $("#players").html(players[1] + " Players");
+
+          var nextgame = horses[1].split(".");
+          $("#nextgame").html("Next game in " + nextgame[1] + " seconds");
+
+          for (i=2;i<count-2;i++)
+          {
+              var horse = horses[i].split(":");
+              var run = ('img.'+horse[0]+'Ran');
+              var left = ('img.'+horse[0]+'Left');
+              var width = parseInt(horse[1])*1;
+              var finish = ('img.'+horse[0]+'Finish');
+              if (width > 75)
+              {
+                  width = 75;
+                  $(finish).attr("src","images/winner.png");
+              }
+              else
+              {
+                  if ($(finish).attr("src") == "images/winner.png")
+                  {
+                      $(finish).attr("src","images/finish.png");
+                  }
+              }
+              var strr = String(width) + "%";
+              var strl = String(75-width) + "%";
+              $(run).width(strr);
+              $(left).width(strl);
+           }
+      }
+
+      function TryReconnect()
+      {
+           if (!connected)
+           {
+               ws = new WebSocket("ws://ec2-54-251-75-197.ap-southeast-1.compute.amazonaws.com/ws");
+
+               ws.onmessage = UpdateHorseLocations;
+ 
+               ws.onclose = function(evt) { $("#connectstate").html("Not Connected"); $("#connectstate").css("border", "1px solid #FF0000"); connected=false;}
+
+               ws.onopen = function(evt) { $("#connectstate").html("Connected"); $("#connectstate").css("border", "1px solid #00FF00"); connected=true; }
+          }
+      }
+      
+
+      $(document).ready(function () {
+ 
+        $("#horse1").fastClick(function(evt) {
+          if (connected) { ws.send("horse1"); }
+
+        }); 
+
+        $("#horse2").fastClick(function(evt) {
+          if (connected) { ws.send("horse2"); }
+
+        }); 
+
+        $("#horse3").fastClick(function(evt) {
+          if (connected) { ws.send("horse3"); }
+
+        }); 
+
+        $("#horse4").fastClick(function(evt) {
+          if (connected) { ws.send("horse4"); }
+
+        }); 
+
+        TryReconnect();
+
+        setInterval(function(){TryReconnect();},1000);
+
+      });
+
+
+    </script>
+</head>
+
+<body>
+
+<div width="100%">
+<button style="width:100%;display:block;background-color:transparent;-moz-border-radius: 15px;-webkit-border-radius: 15px;border: 1px solid #000000;" type="button" id="horse1" value="horse1">
+<img class="horse1Ran" height="1" width="0%" src="images/spacer.png" />
+<img width='10%' src='images/Horse1.png' />
+<img class="horse1Left" height="1" width="75%" src="images/spacer.png" />
+<img class="horse1Finish" width='10%' src="images/finish.png" />
+</button>
+</div>
+
+<div>
+<button style="width:100%;display:block;background-color:transparent;-moz-border-radius: 15px;-webkit-border-radius: 15px;border: 1px solid #FF0000;" id="horse2" value="horse2">
+<img class="horse2Ran" height="1" width="0%" src="images/spacer.png" />
+<img width='10%' src='images/Horse2.png' />
+<img class="horse2Left" height="1" width="75%" src="images/spacer.png" />
+<img class="horse2Finish" width='10%' src="images/finish.png" />
+</button>
+</div>
+
+<div>
+<button style="width:100%;display:block;background-color:transparent;-moz-border-radius: 15px;-webkit-border-radius: 15px;border: 1px solid #00FF00;" id="horse3" value="horse3">
+<img class="horse3Ran" height="1" width="0%" src="images/spacer.png" />
+<img width='10%' src='images/Horse3.png' />
+<img class="horse3Left" height="1" width="75%" src="images/spacer.png" />
+<img class="horse3Finish" width='10%' src="images/finish.png" />
+</button>
+</div>
+
+<div>
+<button style="width:100%;display:block;background-color:transparent;-moz-border-radius: 15px;-webkit-border-radius: 15px;border: 1px solid #0000FF;" id="horse4" value="horse4">
+<img class="horse4Ran" height="1" width="0%" src="images/spacer.png" />
+<img width='10%' src='images/Horse4.png' />
+<img class="horse4Left" height="1" width="75%" src="images/spacer.png" />
+<img class="horse4Finish" width='10%' src="images/finish.png" />
+</button>
+</div>
+<button style="background-color:transparent;-moz-border-radius: 15px;-webkit-border-radius: 15px;border: 1px solid #FF0000;" id="connectstate" value="connectstate">
+Not Connected
+</button>
+<button style="background-color:transparent;-moz-border-radius: 15px;-webkit-border-radius: 15px;border: 1px solid #000000;" id="players" value="players">
+Not Connected
+</button>
+<button style="background-color:transparent;-moz-border-radius: 15px;-webkit-border-radius: 15px;border: 1px solid #000000;" id="nextgame" value="nextgame">
+Not Connected
+</button>
+<button style="background-color:transparent;-moz-border-radius: 15px;-webkit-border-radius: 15px;border: 1px solid #00FF00;" id="racestatus" value="racestatus">
+Go!!
+</button>
+</body>
+</html>
